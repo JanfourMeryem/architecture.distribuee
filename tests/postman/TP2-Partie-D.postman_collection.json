@@ -1,0 +1,296 @@
+{
+  "info": {
+    "name": "TP2 — Partie D (Scénarios API)",
+    "description": "Exécuter le dossier « Services démarrés » dans l’ordre. Pour la panne, refaire les requêtes de création de Sara et du cours, vérifier l’enrichissement, puis arrêter ServiceEtudiants et envoyer la requête du dossier « Panne ». En Docker, utiliser `docker compose stop etudiants`, puis `docker compose start etudiants` pour le remettre en service.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "etudiantsUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "coursUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "etudiantId",
+      "value": ""
+    },
+    {
+      "key": "coursId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Services démarrés",
+      "item": [
+        {
+          "name": "Créer Sara",
+          "request": {
+            "method": "POST",
+            "url": "{{etudiantsUrl}}/etudiants",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Sara\",\"email\":\"sara@u.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "const e = pm.response.json();",
+                  "pm.test(\"Étudiant valide\", () => { pm.expect(e.id).to.be.a(\"number\"); pm.expect(e).to.deep.equal({id:e.id, nom:\"Sara\", email:\"sara@u.com\"}); });",
+                  "pm.collectionVariables.set(\"etudiantId\", String(e.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lire Sara",
+          "request": {
+            "method": "GET",
+            "url": "{{etudiantsUrl}}/etudiants/{{etudiantId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Étudiant relu\", () => pm.expect(pm.response.json()).to.deep.equal({id:Number(pm.collectionVariables.get(\"etudiantId\")), nom:\"Sara\", email:\"sara@u.com\"}));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lister les étudiants",
+          "request": {
+            "method": "GET",
+            "url": "{{etudiantsUrl}}/etudiants",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Sara figure dans la liste\", () => pm.expect(pm.response.json()).to.deep.include({id:Number(pm.collectionVariables.get(\"etudiantId\")), nom:\"Sara\", email:\"sara@u.com\"}));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer le cours",
+          "request": {
+            "method": "POST",
+            "url": "{{coursUrl}}/cours",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titre\":\"Prog 3\",\"etudiantId\":{{etudiantId}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json();",
+                  "pm.test(\"Cours valide\", () => { pm.expect(c.id).to.be.a(\"number\"); pm.expect(c).to.deep.equal({ id:c.id, titre:\"Prog 3\", etudiantId:Number(pm.collectionVariables.get(\"etudiantId\")) }); });",
+                  "pm.collectionVariables.set(\"coursId\", String(c.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lire le cours",
+          "request": {
+            "method": "GET",
+            "url": "{{coursUrl}}/cours/{{coursId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Cours relu\", () => pm.expect(pm.response.json()).to.deep.equal({ id: Number(pm.collectionVariables.get(\"coursId\")), titre: \"Prog 3\", etudiantId: Number(pm.collectionVariables.get(\"etudiantId\")) }));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lister les cours",
+          "request": {
+            "method": "GET",
+            "url": "{{coursUrl}}/cours",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Le cours figure dans la liste\", () => pm.expect(pm.response.json()).to.deep.include({ id: Number(pm.collectionVariables.get(\"coursId\")), titre: \"Prog 3\", etudiantId: Number(pm.collectionVariables.get(\"etudiantId\")) }));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier le cours enrichi",
+          "request": {
+            "method": "GET",
+            "url": "{{coursUrl}}/cours/enrichis",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Le cours enrichi contient Sara\", () => {",
+                  "    pm.expect(pm.response.json()).to.deep.include({ id: Number(pm.collectionVariables.get(\"coursId\")), titre: \"Prog 3\", etudiantNom: \"Sara\" });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer Sara",
+          "request": {
+            "method": "DELETE",
+            "url": "{{etudiantsUrl}}/etudiants/{{etudiantId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"204 No Content\", () => pm.response.to.have.status(204));",
+                  "pm.test(\"Réponse vide\", () => pm.expect(pm.response.text()).to.eql(\"\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier que Sara est introuvable",
+          "request": {
+            "method": "GET",
+            "url": "{{etudiantsUrl}}/etudiants/{{etudiantId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Erreur JSON lisible\", () => { const e = pm.response.json(); pm.expect(e.status).to.eql(404); pm.expect(e.error).to.eql(\"Not Found\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier le cours après suppression",
+          "request": {
+            "method": "GET",
+            "url": "{{coursUrl}}/cours/enrichis",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Le cours enrichi contient INCONNU\", () => {",
+                  "    pm.expect(pm.response.json()).to.deep.include({ id: Number(pm.collectionVariables.get(\"coursId\")), titre: \"Prog 3\", etudiantNom: \"INCONNU\" });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Panne",
+      "item": [
+        {
+          "name": "Vérifier le cours pendant la panne",
+          "request": {
+            "method": "GET",
+            "url": "{{coursUrl}}/cours/enrichis",
+            "header": [],
+            "description": "Après avoir confirmé que le cours enrichi contient Sara, arrêter ServiceEtudiants. Envoyer cette requête seule. Le cours doit rester présent avec etudiantNom=INCONNU."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Le cours enrichi contient INCONNU\", () => {",
+                  "    pm.expect(pm.response.json()).to.deep.include({ id: Number(pm.variables.get(\"coursId\")), titre: \"Prog 3\", etudiantNom: \"INCONNU\" });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

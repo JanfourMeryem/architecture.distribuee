@@ -1,0 +1,298 @@
+{
+  "info": {
+    "name": "TP2 — ServiceCours (Parties B et C)",
+    "description": "# ServiceCours — Partie B, étape 6\n\nAPI REST locale sur `http://localhost:8082`. Démarrer ServiceCours, puis exécuter les requêtes dans l’ordre : POST crée le cours de test, GET vérifie qu’il figure dans la liste. Les assertions sont disponibles dans **Scripts → Post-response**.\n\n`id` est généré par le service. `etudiantId` est enregistré comme référence numérique. Les données sont stockées en mémoire et disparaissent au redémarrage. Chaque POST crée un nouvel exemple.\n\nDans Postman Web, choisir **Desktop Agent** pour joindre le service local.\n\nLe dossier Partie C vérifie la communication avec ServiceEtudiants sur le port 8081.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "coursId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "type": "string",
+      "key": "etudiantsBaseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "type": "string",
+      "key": "partieCEtudiantId",
+      "value": ""
+    },
+    {
+      "type": "string",
+      "key": "partieCCoursId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 — Créer un cours",
+      "request": {
+        "method": "POST",
+        "description": "Crée un cours à partir de `titre` et `etudiantId`. Réponse `200 OK` avec `id` généré. Le script mémorise cet identifiant dans `coursId`.",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cours",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cours"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titre\": \"Prog 3\",\n  \"etudiantId\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const cours = pm.response.json();",
+              "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Identifiant généré et données conservées\", () => {",
+              "    pm.expect(cours.id).to.be.a(\"number\");",
+              "    pm.expect(cours.titre).to.eql(\"Prog 3\");",
+              "    pm.expect(cours.etudiantId).to.eql(1);",
+              "});",
+              "if (pm.response.code === 200 && Number.isInteger(cours.id)) {",
+              "    pm.collectionVariables.set(\"coursId\", String(cours.id));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Exemple 200 OK",
+          "originalRequest": {
+            "method": "POST",
+            "description": "Crée un cours à partir de `titre` et `etudiantId`. Réponse `200 OK` avec `id` généré. Le script mémorise cet identifiant dans `coursId`.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cours",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cours"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Prog 3\",\n  \"etudiantId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"id\": 1,\n  \"titre\": \"Prog 3\",\n  \"etudiantId\": 1\n}"
+        }
+      ]
+    },
+    {
+      "name": "02 — Lister les cours",
+      "request": {
+        "method": "GET",
+        "description": "Renvoie `200 OK` avec un tableau JSON. Après le POST, le test retrouve le cours par son identifiant. Au démarrage, la liste peut être vide.",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/cours",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cours"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const liste = pm.response.json();",
+              "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"La réponse est une liste\", () => pm.expect(liste).to.be.an(\"array\"));",
+              "pm.test(\"Le cours créé figure dans la liste\", () => {",
+              "    const id = pm.collectionVariables.get(\"coursId\");",
+              "    pm.expect(id, \"Exécuter POST avant GET\").to.be.a(\"string\").and.not.be.empty;",
+              "    pm.expect(liste).to.deep.include({ id: Number(id), titre: \"Prog 3\", etudiantId: 1 });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Exemple 200 OK",
+          "originalRequest": {
+            "method": "GET",
+            "description": "Renvoie `200 OK` avec un tableau JSON. Après le POST, le test retrouve le cours par son identifiant. Au démarrage, la liste peut être vide.",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cours",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cours"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "[\n  {\n    \"id\": 1,\n    \"titre\": \"Prog 3\",\n    \"etudiantId\": 1\n  }\n]"
+        }
+      ]
+    },
+    {
+      "name": "Partie C — Communication inter-services",
+      "description": "Exécuter les trois requêtes dans l’ordre avec les deux services démarrés. Pour simuler la panne, arrêter ServiceEtudiants et renvoyer GET /cours/enrichis : le cours reste présent et etudiantNom vaut INCONNU.",
+      "item": [
+        {
+          "name": "01 — Créer Sara",
+          "request": {
+            "method": "POST",
+            "url": "{{etudiantsBaseUrl}}/etudiants",
+            "description": "Crée un étudiant et mémorise l’identifiant généré.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Sara\",\"email\":\"sara@u.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "const etudiant = pm.response.json();",
+                  "pm.test(\"Sara a un identifiant\", () => { pm.expect(etudiant.nom).to.eql(\"Sara\"); pm.expect(etudiant.id).to.be.a(\"number\"); });",
+                  "pm.collectionVariables.set(\"partieCEtudiantId\", String(etudiant.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 — Créer le cours associé",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/cours",
+            "description": "Associe le cours à l’identifiant retourné par ServiceEtudiants.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"titre\":\"Prog 3\",\"etudiantId\":{{partieCEtudiantId}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const cours = pm.response.json();",
+                  "pm.test(\"Le cours référence Sara\", () => { pm.expect(cours.id).to.be.a(\"number\"); pm.expect(cours.etudiantId).to.eql(Number(pm.collectionVariables.get(\"partieCEtudiantId\"))); });",
+                  "pm.collectionVariables.set(\"partieCCoursId\", String(cours.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 — Vérifier le cours enrichi",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/cours/enrichis",
+            "description": "Vérifie que le cours créé est renvoyé avec le nom Sara.",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Le cours enrichi contient le nom Sara\", () => {",
+                  "    const id = Number(pm.collectionVariables.get(\"partieCCoursId\"));",
+                  "    pm.expect(pm.response.json()).to.deep.include({ id, titre: \"Prog 3\", etudiantNom: \"Sara\" });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

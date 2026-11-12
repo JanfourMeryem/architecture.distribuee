@@ -1,0 +1,13 @@
+services:
+  etudiants:
+    build: ./ServiceEtudiants
+    ports:
+      - "8081:8081"
+  cours:
+    build: ./ServiceCours
+    ports:
+      - "8082:8082"
+    depends_on:
+      - etudiants
+    environment:
+      SERVICE_ETUDIANTS_URL: http://etudiants:8081/etudiants
